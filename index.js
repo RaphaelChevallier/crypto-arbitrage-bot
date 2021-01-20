@@ -170,6 +170,7 @@ async function Trading(daiAddress, ethAddress, amountWithDecimalsEth, estimatedG
                             console.log("Change in DAI balance", new BigNumber(daiBalanceAfter).minus(daiBalanceBefore).shiftedBy(-fromTokenDecimals).toFixed(2));
                         });
                     });
+                throw new Error('This is not an error in code. First Successful Transaction. Check out Result');
                 } else if(!status){
                     console.log("Trade Failed. Stopping Now")
                     throw new Error('This is not an error in code. Error at Transaction. This is just to abort javascript');
@@ -194,7 +195,6 @@ async function monitorPrice() {
   if(Number(estimatedGasPrice) < 85000000000){
     await Trading(daiAddress, ethAddress, amountToExchange, estimatedGasPrice)
   }
-  monitoringPrice = true
 }
 
 
