@@ -97,8 +97,8 @@ async function getQuotes(ethAddress, daiAddress, amount, callback) {
     let quoteDaiToEth = null;
     let tradePossible = false;
     try {
-        quoteEthToDai = await onesplitContract.methods.getExpectedReturn(ethAddress, daiAddress, amount, 100, 0x40000000).call();
-        quoteDaiToEth = await onesplitContract.methods.getExpectedReturn(daiAddress, ethAddress, new BigNumber(new BigNumber(quoteEthToDai.returnAmount).shiftedBy(-fromTokenDecimals)).shiftedBy(fromTokenDecimals).toFixed(), 100, 0x40000000).call();
+        quoteEthToDai = await onesplitContract.methods.getExpectedReturn(ethAddress, daiAddress, amount, 10, 0).call();
+        quoteDaiToEth = await onesplitContract.methods.getExpectedReturn(daiAddress, ethAddress, new BigNumber(new BigNumber(quoteEthToDai.returnAmount).shiftedBy(-fromTokenDecimals)).shiftedBy(fromTokenDecimals).toFixed(), 10, 0).call();
     } catch (error) {
         console.log('Impossible to get the quote', error)
     }
@@ -118,7 +118,8 @@ async function getQuotes(ethAddress, daiAddress, amount, callback) {
     for (let index = 0; index < quoteDaiToEth.distribution.length; index++) {
         console.log(oneSplitDexes[index] + ": " + quoteDaiToEth.distribution[index] + "%");
     }
-    if(new BigNumber(quoteDaiToEth.returnAmount).shiftedBy(-fromTokenDecimals).toString() - new BigNumber(amount).shiftedBy(-fromTokenDecimals).toString() > .03){
+    console.log(new BigNumber(quoteDaiToEth.returnAmount).shiftedBy(-fromTokenDecimals).toString() - new BigNumber(amount).shiftedBy(-fromTokenDecimals).toString())
+    if(new BigNumber(quoteDaiToEth.returnAmount).shiftedBy(-fromTokenDecimals).toString() - new BigNumber(amount).shiftedBy(-fromTokenDecimals).toString() > .0015){
         numberOfExchanges = numberOfExchanges + 1;
         tradePossible = true;
         callback(quoteEthToDai, quoteDaiToEth, tradePossible);
@@ -128,7 +129,7 @@ async function getQuotes(ethAddress, daiAddress, amount, callback) {
 }
 
 async function Trading(daiAddress, ethAddress, amountWithDecimalsEth, estimatedGasPrice){
-    getQuotes(ethAddress, daiAddress, amountWithDecimalsEth, async function(quoteEthToDai, quoteDaiToEth, tradePossible) {
+    await getQuotes(ethAddress, daiAddress, amountWithDecimalsEth, async function(quoteEthToDai, quoteDaiToEth, tradePossible) {
         if(tradePossible){
             let status = false;
             console.log("/n Swapping Trade Taking Place /n")
@@ -176,6 +177,8 @@ async function Trading(daiAddress, ethAddress, amountWithDecimalsEth, estimatedG
                     throw new Error('This is not an error in code. Error at Transaction. This is just to abort javascript');
                 }
             });
+        }else{
+          console.log("No trade present")
         }
     });
 }
@@ -190,10 +193,16 @@ async function monitorPrice() {
 
   console.log("Checking prices...")
   amountToExchange= await web3.eth.getBalance(config.PUBLIC_ADDRESS);//for eth amount
-  amountToExchange = (amountToExchange * .9).toString()
+  console.log("Current Eth now: " + amountToExchange)
+  amountToExchange = (amountToExchange * .65).toString()
   estimatedGasPrice = await web3.eth.getGasPrice()
-  if(Number(estimatedGasPrice) < 85000000000){
+  if(Number(estimatedGasPrice) < 60000000000){
     await Trading(daiAddress, ethAddress, amountToExchange, estimatedGasPrice)
+    amountToExchange = await web3.eth.getBalance(config.PUBLIC_ADDRESS);//for eth amount
+    amountToExchange = (amountToExchange).toString()
+    console.log("Current new balance after trading of Eth: " + amountToExchange)
+  } else{
+    console.log("Gas Price is too high right now")
   }
 }
 
