@@ -2,6 +2,7 @@ const {config} = require('./config.js');
 var Web3 = require('web3');
 const BigNumber = require('bignumber.js');
 const { randomHex } = require("web3-utils");
+const notifier = require('node-notifier');
 
 const oneSplitABI = require('./abis/onesplit.json');
 const onesplitAddress = '0xC586BeF4a0992C495Cf22e1aeEE4E446CECDee0E'; // 1plit contract address on Main net
@@ -198,8 +199,17 @@ async function Trading(daiAddress, ethAddress, amountWithDecimalsEth, estimatedG
             status = await waitTransaction(txHash);
             console.log("Status of TXN Hash is: " + status)
             console.log("Just done a recent trade.")
+            return true;
+        } else{
+            notifier.notify({
+                'title': 'Failed to trade back Dai. Manual Do Now. 1inch.',
+                'message': 'Check Etherscan at your address: ' + config.PUBLIC_ADDRESS,
+                'sound': 'ding.mp3',
+                'wait': true,
+                timeout: 5
+            });
+            sleep(600000);
         }
-        return true;
     }
     return false;
 }
@@ -222,7 +232,15 @@ async function monitorPrice() {
     estimatedGasPrice = Number(estimatedGasPrice) + 3000000000
     monitoringPrice = true;
     let done = await Trading(daiAddress, ethAddress, amountToExchange, estimatedGasPrice.toString())
-    console.log("Trading Eth to Dai is Done: " + done)
+    if(done == true){
+        notifier.notify({
+            'title': 'Trading Arbitrage has been completed',
+            'message': 'Check Etherscan at your address: ' + config.PUBLIC_ADDRESS,
+            'sound': 'ding.mp3',
+            'wait': true,
+            timeout: 5
+          });
+    }
     monitoringPrice = false;
     amountToExchange = await web3.eth.getBalance(config.PUBLIC_ADDRESS);//for eth amount
     amountToExchange = (amountToExchange).toString()
@@ -234,5 +252,5 @@ async function monitorPrice() {
 
 
 // Check markets every n seconds
-const POLLING_INTERVAL = process.env.POLLING_INTERVAL || 10000 // 5 Seconds
+const POLLING_INTERVAL = process.env.POLLING_INTERVAL || 7000 // 7 Seconds
 priceMonitor = setInterval(async () => { await monitorPrice() }, POLLING_INTERVAL)
