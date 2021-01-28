@@ -226,7 +226,7 @@ async function monitorPrice() {
   console.log("Checking prices...")
   amountToExchange= await web3.eth.getBalance(config.PUBLIC_ADDRESS);//for eth amount
   console.log("Current Eth now: " + amountToExchange)
-  amountToExchange = (amountToExchange * .65).toString()
+  amountToExchange = (amountToExchange * .75).toString()
   estimatedGasPrice = await web3.eth.getGasPrice()
   if(Number(estimatedGasPrice) < 65000000000){
     estimatedGasPrice = Number(estimatedGasPrice) + 3000000000
